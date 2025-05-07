@@ -13,7 +13,6 @@ interface RouletteWheelProps {
 
 export default function RouletteWheel({
   isSpinning,
-  resultIndex,
   spinDuration,
   presetWinner,
   entries,

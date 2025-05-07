@@ -18,7 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Trash, RotateCcw, Settings, X } from "lucide-react";
+import { Plus, Trash, RotateCcw, Settings } from "lucide-react";
 import dynamic from "next/dynamic";
 
 // Import the wheel component with dynamic import to avoid SSR issues
