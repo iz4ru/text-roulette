@@ -18,7 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Trash, RotateCcw, Settings, Info } from "lucide-react";
+import { Plus, Trash, RotateCcw, Settings, Info, Volume2, VolumeX } from "lucide-react";
 import dynamic from "next/dynamic";
 
 // Import the wheel component with dynamic import to avoid SSR issues
@@ -54,6 +54,16 @@ export default function RouletteGame() {
   const [entries, setEntries] = useState(DEFAULT_ENTRIES);
   const [newEntry, setNewEntry] = useState("");
   const [adminDialogOpen, setAdminDialogOpen] = useState(false);
+  const [isSoundEnabled, setIsSoundEnabled] = useState(true);
+  
+  // Sound related refs
+  const tickAudioRef = useRef<HTMLAudioElement | null>(null);
+  const winAudioRef = useRef<HTMLAudioElement | null>(null);
+  const cheerAudioRef = useRef<HTMLAudioElement | null>(null);
+  const applauseAudioRef = useRef<HTMLAudioElement | null>(null);
+  const clickAudioRef = useRef<HTMLAudioElement | null>(null);
+  const tickIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const tickTimeoutsRef = useRef<NodeJS.Timeout[]>([]);
 
   // For mobile admin access
   const [tapCount, setTapCount] = useState(0);
@@ -78,11 +88,49 @@ export default function RouletteGame() {
 
   const correctPassword = "admin123"; // In a real app, this would be securely stored
 
+  // Initialize audio players
+  useEffect(() => {
+    // Only initialize on client side
+    if (typeof window !== "undefined") {
+      // Create audio elements
+      tickAudioRef.current = new Audio('/sounds/tick.mp3');
+      winAudioRef.current = new Audio('/sounds/win.mp3');
+      cheerAudioRef.current = new Audio('/sounds/cheer.mp3');
+      applauseAudioRef.current = new Audio('/sounds/applause.mp3');
+      clickAudioRef.current = new Audio('/sounds/click.mp3');
+      
+      // Preload audio files
+      tickAudioRef.current.load();
+      winAudioRef.current.load();
+      cheerAudioRef.current.load();
+      applauseAudioRef.current.load();
+      clickAudioRef.current.load();
+    }
+    
+    return () => {
+      // Clean up intervals
+      if (tickIntervalRef.current) {
+        clearInterval(tickIntervalRef.current);
+      }
+    };
+  }, []);
+
+  const clearAllTickTimeouts = () => {
+    tickTimeoutsRef.current.forEach((id) => clearTimeout(id));
+    tickTimeoutsRef.current = [];
+  };  
+
   useEffect(() => {
     // Load saved entries from localStorage if available
     const savedEntries = localStorage.getItem("rouletteEntries");
     if (savedEntries) {
       setEntries(JSON.parse(savedEntries));
+    }
+    
+    // Load sound preference from localStorage
+    const soundEnabled = localStorage.getItem("soundEnabled");
+    if (soundEnabled !== null) {
+      setIsSoundEnabled(soundEnabled === "true");
     }
 
     // Add key event listeners for the secret admin combination
@@ -127,12 +175,68 @@ export default function RouletteGame() {
     localStorage.setItem("rouletteEntries", JSON.stringify(updatedEntries));
   }, []);
 
+  // Toggle sound on/off
+  const toggleSound = () => {
+    const newState = !isSoundEnabled;
+    setIsSoundEnabled(newState);
+    localStorage.setItem("soundEnabled", newState.toString());
+    
+    // If turning off while spinning, stop the ticking sounds
+    if (!newState && tickIntervalRef.current) {
+      clearInterval(tickIntervalRef.current);
+    }
+  };
+
+  // Play tick sound
+  const playTick = () => {
+    if (isSoundEnabled && tickAudioRef.current) {
+      tickAudioRef.current.currentTime = 0;
+      tickAudioRef.current.play().catch(err => console.error("Error playing tick sound:", err));
+    }
+  };
+  
+  // Play win sound
+  const playWinSound = () => {
+    if (isSoundEnabled && winAudioRef.current) {
+      winAudioRef.current.currentTime = 0;
+      winAudioRef.current.play().catch(err => console.error("Error playing win sound:", err));
+    }
+  };
+
+  // Play cheer sound
+  const playCheerSound = () => {
+    if (isSoundEnabled && cheerAudioRef.current) {
+      cheerAudioRef.current.currentTime = 0;
+      cheerAudioRef.current.play().catch(err => console.error("Error playing cheer sound:", err));
+    }
+  };
+
+  // Play applause sound
+  const playApplauseSound = () => {
+    if (isSoundEnabled && applauseAudioRef.current) {
+      applauseAudioRef.current.currentTime = 0;
+      applauseAudioRef.current.play().catch(err => console.error("Error playing applause sound:", err));
+    }
+  };
+
+  // Play click sound
+  const playClickSound = () => {
+    if (isSoundEnabled && clickAudioRef.current) {
+      clickAudioRef.current.currentTime = 0;
+      clickAudioRef.current.play().catch(err => console.error("Error playing click sound:", err));
+    }
+  };
+
   const handleSpin = () => {
     if (mustSpin || entries.length === 0) return;
-
-    // Determine the winning index
+  
+    // 🔇 Bersihin semua tick timeout sebelumnya
+    clearAllTickTimeouts();
+  
+    playClickSound();
+  
+    // Tentukan pemenang
     let winningIndex;
-
     if (
       isAdminAuthenticated &&
       presetWinner !== null &&
@@ -140,25 +244,61 @@ export default function RouletteGame() {
     ) {
       winningIndex = presetWinner;
     } else {
-      // Random result if no preset or not in admin mode
       winningIndex = Math.floor(Math.random() * entries.length);
     }
-
+  
     setPrizeNumber(winningIndex);
     setMustSpin(true);
     setResult(null);
-    setShowConfetti(true);
-  };
+  
+    // Bersihin interval ticking lama
+    if (tickIntervalRef.current) {
+      clearInterval(tickIntervalRef.current);
+    }
+  
+    // Mainkan tick sound dengan delay makin melambat
+    if (isSoundEnabled) {
+      const totalTicks = Math.floor(spinDuration * 60);
+      let currentTick = 0;
+      let delay = 40;
+  
+      const playTickWithIncreasingDelay = () => {
+        playTick();
+        currentTick++;
+  
+        delay = 40 + (currentTick * currentTick / 10);
+  
+        if (currentTick < totalTicks) {
+          const timeoutId = setTimeout(playTickWithIncreasingDelay, delay);
+          tickTimeoutsRef.current.push(timeoutId);
+        }
+      };
+  
+      playTickWithIncreasingDelay();
+    }
+  };  
 
   const handleStopSpinning = () => {
     setMustSpin(false);
     setResult(entries[prizeNumber]);
     setShowConfetti(true);
+    
+    // Play win sound when the wheel stops
+    playWinSound();
+    playCheerSound();
+    playApplauseSound();
+  };
+
+  const resetWinner = () => {
+    playClickSound();
+    setResult(null);
+    setShowConfetti(false);
   };
 
   const handleAdminLogin = () => {
     if (adminPassword === correctPassword) {
       setIsAdminAuthenticated(true);
+      playClickSound();
     } else {
       alert("Incorrect password");
     }
@@ -168,6 +308,7 @@ export default function RouletteGame() {
     setIsAdminAuthenticated(false);
     setAdminPassword("");
     setPresetWinner(null);
+    playClickSound();
   };
 
   const updateEntry = (index: number, value: string) => {
@@ -178,6 +319,7 @@ export default function RouletteGame() {
 
   const addEntry = () => {
     if (newEntry.trim() !== "") {
+      playClickSound();
       const updatedEntries = [...entries, newEntry.trim()];
       saveEntries(updatedEntries);
       setNewEntry("");
@@ -185,11 +327,12 @@ export default function RouletteGame() {
   };
 
   const removeEntry = (index: number) => {
-    if (entries.length <= 1) {
-      alert("You need at least one entry in the wheel");
+    if (entries.length <= 2) {
+      alert("You need at least two entry in the wheel");
       return;
     }
 
+    playClickSound();
     const updatedEntries = entries.filter((_, i) => i !== index);
     saveEntries(updatedEntries);
 
@@ -209,6 +352,7 @@ export default function RouletteGame() {
         "Reset to default entries? This will remove all your custom entries."
       )
     ) {
+      playClickSound();
       saveEntries(DEFAULT_ENTRIES);
       setPresetWinner(null);
     }
@@ -368,20 +512,32 @@ export default function RouletteGame() {
                 </div>
               )}
 
-              <div className="flex gap-4 mb-4 w-full justify-center">
+              <div className="grid grid-cols-1 lg:flex gap-4 mb-4 w-full justify-center items-center">
                 <Button
                   onClick={handleSpin}
                   disabled={mustSpin || entries.length === 0}
                   className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-600 text-white px-8 py-6 text-xl border-none"
                 >
-                  {mustSpin ? "Spinning..." : "SPIN"}
+                  {mustSpin ? "Spinning..." : result ? "Spin Again" : "SPIN"}
                 </Button>
+
+                {/* Reset winner button - shows only after a result */}
+                {result !== null && (
+                  <Button
+                    onClick={() => removeEntry(prizeNumber)}
+                    variant="outline"
+                    className="bg-[#FAFAFA] text-yellow-600 px-8 py-6 text-xl border-none"
+                  >
+                    Reset Winner
+                  </Button>
+                )}
 
                 {/* Mobile only settings button */}
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="outline" size="icon" className="md:hidden">
+                    <Button variant="outline" className="md:hidden">
                       <Settings className="h-4 w-4" />
+                      <p>Edit Entry</p>
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-h-[80vh] overflow-y-auto bg-slate-800 border-slate-700">
@@ -473,6 +629,7 @@ export default function RouletteGame() {
               <p>1. Add or edit entries in the side panel</p>
               <p>2. Click SPIN to start the wheel</p>
               <p>3. The result will be displayed below the wheel</p>
+              <p>4. Use the sound toggle button to turn sounds on/off</p>
 
               <h3 className="font-medium text-slate-200">Admin Access:</h3>
               <p>&bull; On desktop: Press Ctrl+Shift+A</p>
