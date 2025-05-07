@@ -18,7 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Trash, RotateCcw, Settings, Info, Volume2, VolumeX } from "lucide-react";
+import { Plus, Trash, RotateCcw, Settings, Info } from "lucide-react";
 import dynamic from "next/dynamic";
 
 // Import the wheel component with dynamic import to avoid SSR issues
@@ -176,16 +176,16 @@ export default function RouletteGame() {
   }, []);
 
   // Toggle sound on/off
-  const toggleSound = () => {
-    const newState = !isSoundEnabled;
-    setIsSoundEnabled(newState);
-    localStorage.setItem("soundEnabled", newState.toString());
+  // const toggleSound = () => {
+  //   const newState = !isSoundEnabled;
+  //   setIsSoundEnabled(newState);
+  //   localStorage.setItem("soundEnabled", newState.toString());
     
-    // If turning off while spinning, stop the ticking sounds
-    if (!newState && tickIntervalRef.current) {
-      clearInterval(tickIntervalRef.current);
-    }
-  };
+  //   // If turning off while spinning, stop the ticking sounds
+  //   if (!newState && tickIntervalRef.current) {
+  //     clearInterval(tickIntervalRef.current);
+  //   }
+  // };
 
   // Play tick sound
   const playTick = () => {
@@ -289,11 +289,11 @@ export default function RouletteGame() {
     playApplauseSound();
   };
 
-  const resetWinner = () => {
-    playClickSound();
-    setResult(null);
-    setShowConfetti(false);
-  };
+  // const resetWinner = () => {
+  //   playClickSound();
+  //   setResult(null);
+  //   setShowConfetti(false);
+  // };
 
   const handleAdminLogin = () => {
     if (adminPassword === correctPassword) {
