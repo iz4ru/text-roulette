@@ -475,9 +475,9 @@ export default function RouletteGame() {
               <p>3. The result will be displayed below the wheel</p>
 
               <h3 className="font-medium text-slate-200">Admin Access:</h3>
-              <p>• On desktop: Press Ctrl+Shift+A</p>
-              <p>• On mobile: Tap the "Text Roulette" title 5 times quickly</p>
-              <p>• Default password: admin123</p>
+              <p>&bull; On desktop: Press Ctrl+Shift+A</p>
+              <p>&bull; On mobile: Tap the "Text Roulette" title 5 times quickly</p>
+              <p>&bull; Default password: admin123</p>
             </div>
           </DialogContent>
         </Dialog>
