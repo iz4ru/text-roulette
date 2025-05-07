@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,7 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Trash, RotateCcw, Settings } from "lucide-react";
+import { Plus, Trash, RotateCcw, Settings, Info } from "lucide-react";
 import dynamic from "next/dynamic";
 
 // Import the wheel component with dynamic import to avoid SSR issues
@@ -54,6 +54,11 @@ export default function RouletteGame() {
   const [entries, setEntries] = useState(DEFAULT_ENTRIES);
   const [newEntry, setNewEntry] = useState("");
   const [adminDialogOpen, setAdminDialogOpen] = useState(false);
+
+  // For mobile admin access
+  const [tapCount, setTapCount] = useState(0);
+  const tapTimer = useRef<NodeJS.Timeout | null>(null);
+  const logoRef = useRef<HTMLDivElement>(null);
 
   // Format data for the wheel
   const wheelData = entries.map((entry, index) => ({
@@ -209,8 +214,46 @@ export default function RouletteGame() {
     }
   };
 
+  // Mobile admin access - tap 5 times on the title within 3 seconds
+  const handleTitleTap = () => {
+    setTapCount((prev) => prev + 1);
+
+    // Clear existing timer
+    if (tapTimer.current) {
+      clearTimeout(tapTimer.current);
+    }
+
+    // Set a new timer to reset tap count after 3 seconds
+    tapTimer.current = setTimeout(() => {
+      setTapCount(0);
+    }, 3000);
+
+    // If 5 taps are detected, open admin dialog
+    if (tapCount === 4) {
+      // This will be the 5th tap
+      setAdminDialogOpen(true);
+      setTapCount(0);
+      if (tapTimer.current) {
+        clearTimeout(tapTimer.current);
+      }
+    }
+  };
+
   return (
     <div className="flex flex-col items-center max-w-4xl mx-auto">
+      {/* App Title - Tap 5 times quickly to access admin on mobile */}
+      <div
+        ref={logoRef}
+        className="mb-6 cursor-default select-none"
+        onClick={handleTitleTap}
+      >
+        <h1 className="text-4xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-amber-400 to-yellow-500">
+          Text Roulette
+        </h1>
+        <p className="text-center text-slate-300">
+          Create your custom wheel of fortune
+        </p>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
         {/* Left panel - only on desktop */}
         <Card className="hidden md:block bg-slate-800 border-slate-700">
@@ -354,9 +397,9 @@ export default function RouletteGame() {
                           <div key={index} className="flex items-center gap-2">
                             <Input
                               value={entry}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                updateEntry(index, e.target.value)
-                              }
+                              onChange={(
+                                e: React.ChangeEvent<HTMLInputElement>
+                              ) => updateEntry(index, e.target.value)}
                               placeholder={`Entry ${index + 1}`}
                               className="bg-slate-700 border-slate-600 text-slate-200"
                             />
@@ -379,7 +422,9 @@ export default function RouletteGame() {
                           }
                           placeholder="New entry"
                           className="bg-slate-700 border-slate-600 text-slate-200"
-                          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                          onKeyDown={(
+                            e: React.KeyboardEvent<HTMLInputElement>
+                          ) => {
                             if (e.key === "Enter") {
                               addEntry();
                             }
@@ -412,7 +457,32 @@ export default function RouletteGame() {
         </div>
       </div>
 
-      {/* Hidden Admin Dialog - only shown with key combination Ctrl+Shift+A */}
+        {/* Help button with admin access instructions */}
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="ghost" size="icon" className="absolute top-4 right-4 text-slate-400">
+              <Info className="h-5 w-5" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="bg-slate-800 border-slate-700">
+            <DialogHeader>
+              <DialogTitle className="text-slate-200">Help & Information</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 text-slate-300">
+              <h3 className="font-medium text-slate-200">How to use:</h3>
+              <p>1. Add or edit entries in the side panel</p>
+              <p>2. Click SPIN to start the wheel</p>
+              <p>3. The result will be displayed below the wheel</p>
+
+              <h3 className="font-medium text-slate-200">Admin Access:</h3>
+              <p>• On desktop: Press Ctrl+Shift+A</p>
+              <p>• On mobile: Tap the "Text Roulette" title 5 times quickly</p>
+              <p>• Default password: admin123</p>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Hidden Admin Dialog - shown with key combination or tap sequence */}
       <Dialog open={adminDialogOpen} onOpenChange={setAdminDialogOpen}>
         <DialogContent className="bg-slate-800 border-slate-700">
           <DialogHeader>
