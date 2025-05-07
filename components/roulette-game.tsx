@@ -28,11 +28,7 @@ const Wheel = dynamic(
 );
 
 // Default text entries for the roulette
-const DEFAULT_ENTRIES = [
-  "Prize 1",
-  "Prize 2",
-  "Prize 3",
-];
+const DEFAULT_ENTRIES = ["Prize 1", "Prize 2", "Prize 3"];
 
 // Default colors for the wheel segments
 const COLORS = [
@@ -85,7 +81,7 @@ export default function RouletteGame() {
     }
 
     // Add key event listeners for the secret admin combination
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Control")
         setKeysPressed((prev) => ({ ...prev, ctrl: true }));
       if (e.key === "Shift")
@@ -103,7 +99,7 @@ export default function RouletteGame() {
       }
     };
 
-    const handleKeyUp = (e) => {
+    const handleKeyUp = (e: KeyboardEvent) => {
       if (e.key === "Control")
         setKeysPressed((prev) => ({ ...prev, ctrl: false }));
       if (e.key === "Shift")
@@ -121,7 +117,7 @@ export default function RouletteGame() {
     };
   }, [keysPressed]);
 
-  const saveEntries = useCallback((updatedEntries) => {
+  const saveEntries = useCallback((updatedEntries: string[]) => {
     setEntries(updatedEntries);
     localStorage.setItem("rouletteEntries", JSON.stringify(updatedEntries));
   }, []);
@@ -169,7 +165,7 @@ export default function RouletteGame() {
     setPresetWinner(null);
   };
 
-  const updateEntry = (index, value) => {
+  const updateEntry = (index: number, value: string) => {
     const updatedEntries = [...entries];
     updatedEntries[index] = value;
     saveEntries(updatedEntries);
@@ -183,7 +179,7 @@ export default function RouletteGame() {
     }
   };
 
-  const removeEntry = (index) => {
+  const removeEntry = (index: number) => {
     if (entries.length <= 1) {
       alert("You need at least one entry in the wheel");
       return;
@@ -231,7 +227,9 @@ export default function RouletteGame() {
                   <div key={index} className="flex items-center gap-2">
                     <Input
                       value={entry}
-                      onChange={(e) => updateEntry(index, e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        updateEntry(index, e.target.value)
+                      }
                       placeholder={`Entry ${index + 1}`}
                       className="bg-slate-700 border-slate-600 text-slate-200"
                     />
@@ -249,10 +247,12 @@ export default function RouletteGame() {
               <div className="flex items-center gap-2">
                 <Input
                   value={newEntry}
-                  onChange={(e) => setNewEntry(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setNewEntry(e.target.value)
+                  }
                   placeholder="New entry"
                   className="bg-slate-700 border-slate-600 text-slate-200"
-                  onKeyDown={(e) => {
+                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                     if (e.key === "Enter") {
                       addEntry();
                     }
@@ -329,7 +329,7 @@ export default function RouletteGame() {
                 <Button
                   onClick={handleSpin}
                   disabled={mustSpin || entries.length === 0}
-                  className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white px-8 py-6 text-xl border-none"
+                  className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-600 text-white px-8 py-6 text-xl border-none"
                 >
                   {mustSpin ? "Spinning..." : "SPIN"}
                 </Button>
@@ -354,7 +354,7 @@ export default function RouletteGame() {
                           <div key={index} className="flex items-center gap-2">
                             <Input
                               value={entry}
-                              onChange={(e) =>
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                                 updateEntry(index, e.target.value)
                               }
                               placeholder={`Entry ${index + 1}`}
@@ -374,10 +374,12 @@ export default function RouletteGame() {
                       <div className="flex items-center gap-2">
                         <Input
                           value={newEntry}
-                          onChange={(e) => setNewEntry(e.target.value)}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setNewEntry(e.target.value)
+                          }
                           placeholder="New entry"
                           className="bg-slate-700 border-slate-600 text-slate-200"
-                          onKeyDown={(e) => {
+                          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                             if (e.key === "Enter") {
                               addEntry();
                             }
@@ -427,7 +429,9 @@ export default function RouletteGame() {
                   id="admin-password"
                   type="password"
                   value={adminPassword}
-                  onChange={(e) => setAdminPassword(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setAdminPassword(e.target.value)
+                  }
                   placeholder="Enter password"
                   className="bg-slate-700 border-slate-600 text-slate-200"
                 />
@@ -444,7 +448,7 @@ export default function RouletteGame() {
                   id="preset-winner"
                   className="w-full p-2 border rounded-md bg-slate-700 border-slate-600 text-slate-200"
                   value={presetWinner === null ? "" : presetWinner}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                     setPresetWinner(
                       e.target.value ? Number.parseInt(e.target.value) : null
                     )
@@ -468,7 +472,7 @@ export default function RouletteGame() {
                   max="10"
                   step="0.5"
                   value={spinDuration}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setSpinDuration(Number.parseFloat(e.target.value))
                   }
                   className="bg-slate-700 border-slate-600 text-slate-200"
