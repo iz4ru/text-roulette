@@ -476,7 +476,7 @@ export default function RouletteGame() {
 
               <h3 className="font-medium text-slate-200">Admin Access:</h3>
               <p>&bull; On desktop: Press Ctrl+Shift+A</p>
-              <p>&bull; On mobile: Tap the "Text Roulette" title 5 times quickly</p>
+              <p>&bull; On mobile: Tap the {"\"Text Roulette\""} title 5 times quickly</p>
               <p>&bull; Default password: admin123</p>
             </div>
           </DialogContent>
